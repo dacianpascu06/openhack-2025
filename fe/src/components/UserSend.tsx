@@ -9,7 +9,8 @@ async function sendData(
   formData: FormState,
   setSuccess: (v: boolean) => void,
   setRespMsg: (s: string) => void,
-  setError: (s: string | null) => void
+  setError: (s: string | null) => void,
+  setLoading: (v: boolean) => void
 ) {
 
   // Check if fields are filled
@@ -35,10 +36,12 @@ async function sendData(
   if (formData.photo) {
     formDataToSend.append("photo", formData.photo);
   }
+  setLoading(true);
   try {
     const resp = await axios.post("http://127.0.0.1:5000/api/v1/create_ticket", formDataToSend);
     const data = resp.data || {};
-    setRespMsg(data.id ? `Raport creat (id: ${data.id})` : "Raport creat cu succes");
+    console.log("Response data:", data);
+    setRespMsg(data.ticket_id ? data.ticket_id : "ff:ff:ff:ff:ff:ff");
     setSuccess(true);
     setError(null);
   } catch (error: any) {
@@ -46,6 +49,8 @@ async function sendData(
     const msg = error?.response?.data?.error || error.message || "Eroare la trimitere";
     setError(String(msg));
     setSuccess(false);
+  } finally {
+    setLoading(false);
   }
 
 
@@ -55,22 +60,25 @@ export default function UserSend({ formData }: { formData: FormState }) {
   const [success, setSuccess] = useState(false);
   const [respMsg, setRespMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   return (
     <Center>
       <div>
         <Button
-          onClick={(e) => sendData(e, formData, setSuccess, setRespMsg, setError)}
+          onClick={(e) => sendData(e, formData, setSuccess, setRespMsg, setError, setLoading)}
           variant="default"
           w="200px"
+          loading={loading}
+          disabled={loading || success}
         >
-          Trimite Petitia
+          {success ? 'Trimis' : 'Trimite Petitia'}
         </Button>
 
         <Modal radius="lg" opened={success} onClose={() => setSuccess(false)} title={null} withCloseButton={false} centered>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <IconCheck size={48} color="#2f9e44" />
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{respMsg ?? 'Trimis cu succes'}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, alignItems: 'center'}}>Raport creat cu succes <br/> ID: {respMsg}</div>
             <Button onClick={() => setSuccess(false)}>OK</Button>
           </div>
         </Modal>
