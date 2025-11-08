@@ -6,7 +6,10 @@ from werkzeug.utils import secure_filename
 
 import firebase_admin
 from firebase_admin import credentials, storage, firestore, auth as firebase_auth
+from openai_service.GPTService import gpt_service as gpt
+from dotenv import load_dotenv
 
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -78,6 +81,13 @@ def create_ticket():
             with open(filename, "rb") as f:
                 blob.upload_from_file(f)
             os.remove(filename)
+
+    try:
+        response = gpt.determine_assignee_ro(location, description)
+        for key, value in response.items():
+            print(key, value)
+    except Exception as e:
+        print(e)
 
     return jsonify({"success": True, "ticket_id": ticket_id}), 201
 
