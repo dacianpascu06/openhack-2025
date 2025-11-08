@@ -5,12 +5,23 @@ import axios from "axios";
 async function sendData(e: React.MouseEvent<HTMLButtonElement>, formData: FormState) {
 
   e.preventDefault();
+  const formDataToSend = new FormData();
+  formDataToSend.append("nume", formData.nume);
+  formDataToSend.append("prenume", formData.prenume);
+  formDataToSend.append("location", formData.location);
+  formDataToSend.append("email", formData.email);
+  formDataToSend.append("description", formData.description);
+
+  if (formData.photo) {
+    formDataToSend.append("photo", formData.photo);
+  }
   try {
-    await axios.post("/your-endpoint", formData);
-    // handle success (e.g., show a message)
+    await axios.post("http://127.0.0.1:5000/api/v1/create_ticket", formDataToSend);
+    console.log("success")
   } catch (error) {
     console.log(error)
   }
+
 
 }
 
