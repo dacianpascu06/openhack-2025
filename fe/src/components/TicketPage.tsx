@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
-import { Card, Text, Badge, Group, Stack } from '@mantine/core';
+import { Card, Text, Stack, Center } from '@mantine/core';
 
 interface TicketCardProps {
-  description: string;
+  city_hall: string;
+  status: string;
+  city: string;
 }
 
 export default function TicketPage() {
@@ -19,7 +21,9 @@ export default function TicketPage() {
         console.log(data)
         if (data.success) {
           setTicket({
-            description: data.description || '',
+            city_hall: data.city_hall || '',
+            city: data.city || '',
+            status: data.status || '',
           });
           setError(false);
         } else {
@@ -35,11 +39,15 @@ export default function TicketPage() {
 
   return <div>
     {error ? <h1>Error</h1> :
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Stack gap="sm">
-          <Text >Description: {ticket?.description}</Text>
-        </Stack>
-      </Card>
+      <Center>
+        <Card shadow="sm" w="400px" mt="300px" padding="lg" radius="md" withBorder>
+          <Stack gap="sm" align='center'>
+            <Text >City: {ticket?.city}</Text>
+            <Text >Primarie: {ticket?.city_hall}</Text>
+            <Text >Status: {ticket?.status}</Text>
+          </Stack>
+        </Card>
+      </Center>
     }
   </div>
 }
