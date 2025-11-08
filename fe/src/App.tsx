@@ -1,13 +1,15 @@
 import '@mantine/core/styles.css';
 
-import { Center, MantineProvider } from '@mantine/core';
+import { MantineProvider } from '@mantine/core';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import UserPage from './components/UserPage';
 
 export default function App() {
-  return <MantineProvider>
-    <div>
-      <Center>
-        <h1>Hello</h1>
-      </Center>
-    </div>
+  return <MantineProvider defaultColorScheme='dark'>
+    <Router>
+      <Routes>
+        <Route path="/" element={<UserPage />}></Route>
+      </Routes>
+    </Router>
   </MantineProvider>
 }
