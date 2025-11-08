@@ -61,18 +61,6 @@ def create_ticket():
     email = request.form.get("email")
     description = request.form.get("description")
 
-    ticket_ref = db.collection("tickets").document(ticket_id)
-    ticket_data = {
-        "id": ticket_id,
-        "nume": nume,
-        "prenume": prenume,
-        "location": location,
-        "email": email,
-        "description": description,
-        "status": "WAITING",
-    }
-    ticket_ref.set(ticket_data)
-
     photo = request.files.get("photo")
     if photo is not None:
         if photo.filename is not None:
@@ -90,6 +78,21 @@ def create_ticket():
     except Exception as e:
         print(e)
         return jsonify({"success": False}), 404
+
+    ticket_ref = db.collection("tickets").document(ticket_id)
+    ticket_data = {
+        "id": ticket_id,
+        "nume": nume,
+        "prenume": prenume,
+        "location": location,
+        "email": email,
+        "description": description,
+        "status": "WAITING",
+    }
+    for key, value in response.items():
+        ticket_data[key] = value
+
+    ticket_ref.set(ticket_data)
 
     return jsonify({"success": True, "ticket_id": ticket_id}), 201
 
