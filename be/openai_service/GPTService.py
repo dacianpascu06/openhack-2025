@@ -65,8 +65,9 @@ class GPTService:
                 max_tokens=max_tokens,
                 temperature=0.5,
             )
-            content = response.choices[0].message.content.strip()
-            return json.loads(content)
+            if response.choices[0].message.content is not None:
+                content = response.choices[0].message.content.strip()
+                return json.loads(content)
 
         except Exception as e:
             print(f"Error determining assignee: {e}")

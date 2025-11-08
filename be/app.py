@@ -69,6 +69,7 @@ def create_ticket():
         "location": location,
         "email": email,
         "description": description,
+        "status": "WAITING",
     }
     ticket_ref.set(ticket_data)
 
@@ -84,12 +85,38 @@ def create_ticket():
 
     try:
         response = gpt.determine_assignee_ro(location, description)
-        for key, value in response.items():
-            print(key, value)
+        if response is None:
+            return jsonify({"success": False}), 404
     except Exception as e:
         print(e)
+        return jsonify({"success": False}), 404
 
     return jsonify({"success": True, "ticket_id": ticket_id}), 201
+
+
+@app.route("/api/v1/get_ticket", methods=["GET", "OPTIONS"])
+def get_ticket():
+    if request.method == "OPTIONS":
+        return "", 200
+
+    ticket_id = request.args.get("ticket_id")
+    ticket_ref = db.collection("tickets").document(ticket_id)
+    ticket = ticket_ref.get()
+    data = {}
+    if ticket.exists:
+        data = ticket.to_dict()
+    else:
+        return jsonify({"success": False}), 404
+
+    if data is None:
+        return jsonify({"success": False}), 404
+
+    for key, value in data.items():
+        print(key, value)
+
+    data["success"] = "True"
+
+    return jsonify(data), 200
 
 
 if __name__ == "__main__":
