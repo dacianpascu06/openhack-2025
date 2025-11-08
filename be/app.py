@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 
 import firebase_admin
-from firebase_admin import credentials, firestore, auth as firebase_auth
+from firebase_admin import credentials, storage, firestore, auth as firebase_auth
 
 
 app = Flask(__name__)
@@ -20,22 +20,24 @@ CORS(
 )
 
 
-# Initialize Firebase Admin SDK using a service account JSON (set GOOGLE_APPLICATION_CREDENTIALS)
-# In Cloud Run / GCP this can use Application Default Credentials instead.
+GCS_BUCKET = os.environ.get("GCS_BUCKET")
+
 if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
     cred = credentials.Certificate(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
     firebase_admin.initialize_app(
-        cred, {"projectId": os.environ.get("GOOGLE_CLOUD_PROJECT")}
+        cred,
+        {
+            "projectId": os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            "storageBucket": GCS_BUCKET,
+        },
     )
 else:
-    # uses ADC in production environments (Cloud Run)
     firebase_admin.initialize_app()
 
-# Firestore client
 db = firestore.client()
+bucket = storage.bucket()
 
 # Configuration: storage bucket name must be set in environment for signed-URL generation
-GCS_BUCKET = os.environ.get("GCS_BUCKET")
 
 
 @app.route("/api/v1/create_ticket", methods=["POST", "OPTIONS"])
@@ -56,8 +58,11 @@ def create_ticket():
     if photo is not None:
         if photo.filename is not None:
             filename = secure_filename(photo.filename)
-            photo.save(f"{filename}")  # Save locally
-            print(f"Saved file: {filename}")
+            photo.save(f"{filename}")
+            blob = bucket.blob(f"{filename}")
+            with open(filename, "rb") as f:
+                blob.upload_from_file(f)
+            os.remove(filename)
 
     return jsonify({"message": "Ok"}), 200
 
