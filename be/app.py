@@ -117,9 +117,14 @@ def get_ticket():
     for key, value in data.items():
         print(key, value)
 
-    data["success"] = "True"
+    keys_to_send = ["status", "city", "city_hall"]
+    response = {}
+    response["success"] = "True"
+    for key, value in data.items():
+        if key in keys_to_send:
+            response[key] = value
 
-    return jsonify(data), 200
+    return jsonify(response), 200
 
 
 if __name__ == "__main__":
