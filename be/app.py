@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
+import uuid
 from flask_cors import CORS
 import os
-import time
 from werkzeug.utils import secure_filename
-from functools import wraps
 
 import firebase_admin
 from firebase_admin import credentials, storage, firestore, auth as firebase_auth
@@ -37,36 +36,51 @@ else:
 db = firestore.client()
 bucket = storage.bucket()
 
-# Configuration: storage bucket name must be set in environment for signed-URL generation
+
+def generate_unique_ticket_id():
+    while True:
+        ticket_id = str(uuid.uuid4())
+        ticket_ref = db.collection("tickets").document(ticket_id)
+        if not ticket_ref.get().exists:
+            return ticket_id
 
 
 @app.route("/api/v1/create_ticket", methods=["POST", "OPTIONS"])
 def create_ticket():
-    print("hello world")
     if request.method == "OPTIONS":
-        # Preflight request response
         return "", 200
+
+    ticket_id = generate_unique_ticket_id()
 
     nume = request.form.get("nume")
     prenume = request.form.get("prenume")
     location = request.form.get("location")
     email = request.form.get("email")
     description = request.form.get("description")
-    print(nume, prenume, location, email, description)
+
+    ticket_ref = db.collection("tickets").document(ticket_id)
+    ticket_data = {
+        "id": ticket_id,
+        "nume": nume,
+        "prenume": prenume,
+        "location": location,
+        "email": email,
+        "description": description,
+    }
+    ticket_ref.set(ticket_data)
 
     photo = request.files.get("photo")
     if photo is not None:
         if photo.filename is not None:
             filename = secure_filename(photo.filename)
             photo.save(f"{filename}")
-            blob = bucket.blob(f"{filename}")
+            blob = bucket.blob(f"{ticket_id}")
             with open(filename, "rb") as f:
                 blob.upload_from_file(f)
             os.remove(filename)
 
-    return jsonify({"message": "Ok"}), 200
+    return jsonify({"success": True, "ticket_id": ticket_id}), 201
 
 
 if __name__ == "__main__":
-    # for local dev keep debug=True, in Cloud Run set FLASK_ENV/production and run with gunicorn
     app.run(debug=True)
